@@ -4,7 +4,7 @@ import {
   render,
   screen,
   fireEvent,
-  waitForElementToBeRemoved,
+  waitFor,
 } from "@testing-library/react";
 import { resetData } from "../mocks/handlers";
 import { server } from "../mocks/server";
@@ -35,15 +35,15 @@ test("adds a new item to the list when the ItemForm is submitted", async () => {
 
   const dessertCount = screen.queryAllByText(/Dessert/).length;
 
-  fireEvent.change(screen.queryByLabelText(/Name/), {
+  fireEvent.change(screen.getByLabelText(/Name/), {
     target: { value: "Ice Cream" },
   });
 
-  fireEvent.change(screen.queryByLabelText(/Category/), {
+  fireEvent.change(screen.getByLabelText(/Category/), {
     target: { value: "Dessert" },
   });
 
-  fireEvent.submit(screen.queryByText(/Add to List/));
+  fireEvent.submit(screen.getByText(/Add to List/));
 
   const iceCream = await screen.findByText(/Ice Cream/);
   expect(iceCream).toBeInTheDocument();
@@ -92,13 +92,16 @@ test("removes an item from the list when the delete button is clicked", async ()
   const deleteButtons = await screen.findAllByText(/Delete/);
   fireEvent.click(deleteButtons[0]);
 
-  await waitForElementToBeRemoved(() => screen.queryByText(/Yogurt/));
+  // Use waitFor instead of waitForElementToBeRemoved
+  await waitFor(() => {
+    expect(screen.queryByText(/Yogurt/)).not.toBeInTheDocument();
+  });
 
   // Rerender the component to ensure the item was persisted
   rerender(<ShoppingList />);
 
   const rerenderedDeleteButtons = await screen.findAllByText(/Delete/);
 
-  expect(rerenderedDeleteButtons.length).toBe(2);
+  expect(rerenderedDeleteButtons.length).toBe(2); // Adjust based on initial data
   expect(screen.queryByText(/Yogurt/)).not.toBeInTheDocument();
 });
